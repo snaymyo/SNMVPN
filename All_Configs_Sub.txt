@@ -1,5 +1,5 @@
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpBdEdWeFhnY0p1NHZ2a0FwUEdOcDFu@18.143.185.235:8443/?outline=1#Singpore
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpjSzRKNHhFOXBzdXhBQVZXV3c0RFdR@thzeexil.duckdns.org:443/?outline=1#Singpore 1
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpjSzRKNHhFOXBzdXhBQVZXV3c0RFdR@18.143.144.62:443/?outline=1#Singpore 1
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwZmdIemNRUXZENXV5VTN4UkJaN0c2@47.129.202.9:443/?outline=1#Singpore 2
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp5Y3ExSzFnaVdEdjhsSE9YakttZTA3@47.129.202.9:443/?outline=1#Singpore 3
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpKcDJ0d3RRUEI3WmdrRGZCelF6SHM3@35.175.117.177:43109/?outline=1#US 
