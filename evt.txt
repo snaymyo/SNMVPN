@@ -1,8 +1,0 @@
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpKYmU0WUJ2eDltck8xdTlDU256OXYw@68.183.185.243:29847/?outline=1#Singpore Server 1ðŸ‡¸ðŸ‡¬
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpPSUp2TldFSURGMUJTME5iMU5FRmh3@129.212.225.122:5359/?outline=1#Singpoer Server 2ðŸ‡¸ðŸ‡¬
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpZM3dPODF5WndyNW5GdnFVc05EN2pT@152.42.208.25:6628/?outline=1#Singpoer Server 3ðŸ‡¸ðŸ‡¬
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTplYkpob0xZYnhTaVhLc0NsTGJxRWtQ@35.186.148.135:23439/?outline=1#Singpoer GCP Server ðŸ‡¸ðŸ‡¬
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwZVgzZlpwb0huSTJFckRzcXRTYW5j@72.60.195.26:14383/?outline=1#Malaysia Server ðŸ‡¸ðŸ‡¬
-vless://3c4ceb5f-a7d6-4ad4-978f-a19cad261045@sa.v5p.camdvr.org:443?encryption=none&security=tls&sni=sa.v5p.camdvr.org&fp= randomized&type=ws&host=sa.v5p.camdvr.org&path=%2F%3Fed%3D2560&allowInsecure=1&fragment=1,40-60,30-50,tlshello#Mytel Bypass 1
-vless://3c4ceb5f-a7d6-4ad4-978f-a19cad261045@vipp.evt.mywire.org:443?encryption=none&security=tls&sni=vipp.evt.mywire.org&fp =randomized&type=ws&host=vipp.evt.mywire.org&path=%2F%3Fed%3D2560&allowInsecure=1&fragment=1,40-60,30-50,tlshello#Mytel Bypass 2
-vless://3c4ceb5f-a7d6-4ad4-978f-a19cad261045@net.evtvpn.ddnsfree.com:443?encryption=none&security=tls&sni=net.evtvpn.ddnsfree.com& fp=randomized&type=ws&host=net.evtvpn.ddnsfree.com&path=%2F%3Fed%3D2560&allowInsecure=1&fragment=1,40-60,30-50,tlshello#Mytel Bypass 3
