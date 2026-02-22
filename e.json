@@ -1,0 +1,238 @@
+// ==============================
+// TELEGRAM BOT - GITHUB UPLOADER
+// ==============================
+
+export default {
+  async fetch(request, env, ctx) {
+    
+    // ========== ၁။ GET Request (Browser ကနေဖွင့်ကြည့်လို့ရအောင်) ==========
+    if (request.method === 'GET') {
+      return new Response(`
+✅ Telegram Bot is running!
+
+Environment Status:
+- TELEGRAM_BOT_TOKEN: ${env.TELEGRAM_BOT_TOKEN ? '✅ ပါတယ်' : '❌ မပါဘူး'}
+- GITHUB_TOKEN: ${env.GITHUB_TOKEN ? '✅ ပါတယ်' : '❌ မပါဘူး'}
+- GITHUB_REPO: ${env.GITHUB_REPO || '❌ မပါဘူး'}
+- GITHUB_FILE_PATH: ${env.GITHUB_FILE_PATH || '❌ မပါဘူး'}
+- GITHUB_BRANCH: ${env.GITHUB_BRANCH || '❌ မပါဘူး'}
+
+Send evt.json file to your bot to update GitHub.
+      `, { 
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+
+    // ========== ၂။ POST Request (Telegram Webhook) ==========
+    if (request.method === 'POST') {
+      try {
+        // Telegram ဆီက Update ကိုယူမယ်
+        const update = await request.json();
+        console.log('📥 Update received:', JSON.stringify(update));
+        
+        // Message နဲ့ Chat ID ရှိမရှိစစ်မယ်
+        const message = update.message;
+        if (!message || !message.chat || !message.chat.id) {
+          return new Response('No message', { status: 200 });
+        }
+
+        const chatId = message.chat.id;
+        
+        // ========== ၃။ ဖိုင်ဟုတ်မဟုတ်စစ်မယ် ==========
+        if (!message.document) {
+          // ဖိုင်မဟုတ်ရင် လမ်းညွှန်စာပြန်မယ်
+          await this.sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, 
+            '📁 ကျေးဇူးပြုပြီး **evt.json** ဖိုင်ကို Document အနေနဲ့ ပို့ပေးပါ။');
+          return new Response('OK', { status: 200 });
+        }
+
+        // ========== ၄။ ဖိုင်အမည်စစ်မယ် ==========
+        const fileName = message.document.file_name;
+        if (fileName !== 'evt.json') {
+          await this.sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+            `⚠️ ဖိုင်အမည် "${fileName}" မှားနေပါတယ်။\n**evt.json** ဖိုင်ကိုပဲ ပို့ပေးပါ။`);
+          return new Response('OK', { status: 200 });
+        }
+
+        // ========== ၅။ ဖိုင်ကိုစတင် Download လုပ်မယ် ==========
+        await this.sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, 
+          '⏳ ဖိုင်ကိုလက်ခံရရှိပါပြီ။ GitHub ပေါ်တင်နေပါတယ်...');
+        
+        const fileId = message.document.file_id;
+        
+        // ၅.၁ Telegram ကနေ File Info ရယူမယ်
+        const fileInfo = await this.getTelegramFileInfo(env.TELEGRAM_BOT_TOKEN, fileId);
+        
+        // ၅.၂ ဖိုင်ကို Download လုပ်မယ်
+        const fileContent = await this.downloadTelegramFile(env.TELEGRAM_BOT_TOKEN, fileInfo.file_path);
+        
+        // ========== ၆။ GitHub ပေါ် Upload လုပ်မယ် ==========
+        const githubResult = await this.uploadToGitHub({
+          token: env.GITHUB_TOKEN,
+          repo: env.GITHUB_REPO,
+          path: env.GITHUB_FILE_PATH,
+          branch: env.GITHUB_BRANCH,
+          content: fileContent,
+          commitMessage: `Bot update: ${fileName}`
+        });
+
+        // ========== ၇။ ရလဒ်ကို Telegram မှာပြန်ပို့မယ် ==========
+        if (githubResult.success) {
+          await this.sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+            `✅ **${fileName}** ကို GitHub ပေါ် အောင်မြင်စွာ တင်ပြီးပါပြီ။\n\n📁 https://github.com/${env.GITHUB_REPO}/blob/${env.GITHUB_BRANCH}/${env.GITHUB_FILE_PATH}`);
+        } else {
+          await this.sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+            `❌ GitHub တင်တဲ့အခါ အမှားဖြစ်သွားပါတယ်။\n\n**Error:** ${githubResult.error}`);
+        }
+
+        return new Response('OK', { status: 200 });
+
+      } catch (error) {
+        // ========== Error Handling ==========
+        console.error('🔥 Worker Error:', error);
+        
+        // Error ကို Telegram ပြန်ပို့ဖို့ကြိုးစားမယ်
+        try {
+          const update = await request.clone().json();
+          const chatId = update?.message?.chat?.id;
+          if (chatId) {
+            await this.sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+              `❌ **အမှားဖြစ်သွားပါတယ်**\n\n${error.message || 'Unknown error'}`);
+          }
+        } catch (e) {
+          // Telegram ပြန်မပို့နိုင်ရင် ဘာမှမလုပ်တော့ဘူး
+        }
+        
+        return new Response('Error', { status: 500 });
+      }
+    }
+
+    // ========== ၈။ အခြား Method တွေအတွက် ==========
+    return new Response('Method not allowed', { status: 405 });
+  },
+
+  // ===========================================
+  // Helper Functions
+  // ===========================================
+
+  // Telegram Message ပို့ရန်
+  async sendTelegramMessage(botToken, chatId, text) {
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        chat_id: chatId, 
+        text: text,
+        parse_mode: 'Markdown'
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('❌ Telegram sendMessage error:', error);
+    }
+    
+    return response;
+  },
+
+  // Telegram File Info ရယူရန်
+  async getTelegramFileInfo(botToken, fileId) {
+    const url = `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (!data.ok) {
+      throw new Error(`Telegram API Error: ${data.description || 'Unknown error'}`);
+    }
+    
+    return {
+      file_path: data.result.file_path,
+      file_size: data.result.file_size
+    };
+  },
+
+  // Telegram File Download လုပ်ရန်
+  async downloadTelegramFile(botToken, filePath) {
+    const url = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status}`);
+    }
+    
+    return await response.text();
+  },
+
+  // GitHub Upload လုပ်ရန်
+  async uploadToGitHub({ token, repo, path, branch, content, commitMessage }) {
+    
+    try {
+      // ၁။ Base64 Encode
+      const base64Content = btoa(unescape(encodeURIComponent(content)));
+      
+      // ၂။ လက်ရှိ File ရှိမရှိ စစ်ဆေးပြီး SHA ရယူမယ်
+      const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
+      const getResponse = await fetch(getUrl, {
+        headers: { 
+          'Authorization': `token ${token}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+      
+      let sha = null;
+      if (getResponse.ok) {
+        const fileData = await getResponse.json();
+        sha = fileData.sha;
+        console.log('📁 Existing file SHA:', sha);
+      } else {
+        console.log('📁 File not found, will create new one');
+      }
+      
+      // ၃။ Upload Body ပြင်ဆင်မယ်
+      const uploadBody = {
+        message: commitMessage,
+        content: base64Content,
+        branch: branch
+      };
+      
+      if (sha) {
+        uploadBody.sha = sha;  // File အဟောင်းရှိရင် Update
+      }
+      
+      // ၄။ GitHub API ကို PUT Request ပို့မယ်
+      const uploadUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify(uploadBody)
+      });
+      
+      // ၅။ Response ကို စစ်ဆေးမယ်
+      const responseText = await uploadResponse.text();
+      console.log('📦 GitHub Response:', uploadResponse.status, responseText);
+      
+      if (!uploadResponse.ok) {
+        let errorMsg = `GitHub API Error (${uploadResponse.status})`;
+        try {
+          const error = JSON.parse(responseText);
+          errorMsg = error.message || errorMsg;
+        } catch (e) {
+          // JSON parse error
+        }
+        return { success: false, error: errorMsg };
+      }
+      
+      return { success: true };
+      
+    } catch (error) {
+      console.error('🔥 GitHub upload error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+};
